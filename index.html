@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Video Counter by SWC</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <header class="site-header">
+    <h1 class="app-title">Video Counter <span>by SWC</span></h1>
+    <div class="header-actions">
+      <label class="file-btn">
+        <input id="videoInput" type="file" accept="video/*" />
+        <span>Upload video</span>
+      </label>
+      <button id="saveConfig" class="ghost-btn" title="Download counters config as JSON">Export config</button>
+      <label class="ghost-btn file-like">
+        <input id="loadConfig" type="file" accept="application/json" />
+        <span>Import config</span>
+      </label>
+      <button id="toggleGrid" class="ghost-btn" title="Toggle placement grid">Toggle grid</button>
+      <button id="deleteSelected" class="ghost-btn" title="Delete selected counter">Delete selected</button>
+      <button id="clearAll" class="ghost-btn" title="Remove all counters">Clear all</button>
+      <button id="exportVideo" class="primary-btn" title="Export video with overlays">Export video</button>
+      <button id="stopExport" class="ghost-btn" title="Stop export" disabled>Stop export</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="media">
+      <div id="videoWrap" class="video-wrap">
+        <video id="video" class="video" controls crossorigin="anonymous"></video>
+        <canvas id="renderCanvas" class="video" style="display:none"></canvas>
+        <div id="overlay" class="overlay">
+          <div class="overlay-grid"></div>
+        </div>
+      </div>
+      <div class="transport">
+        <button id="playPause" class="primary-btn">Play or pause</button>
+        <div class="time-readout">
+          <span id="currentTime">00:00</span>
+          <span>of</span>
+          <span id="duration">00:00</span>
+        </div>
+        <div class="snap-tools">
+          <button id="snapKeyframes" class="ghost-btn">Snap to next keyframe</button>
+          <button id="jumpBack" class="ghost-btn">Jump back 1s</button>
+          <button id="jumpFwd" class="ghost-btn">Jump forward 1s</button>
+        </div>
+      </div>
+    </section>
+
+    <aside class="panel">
+      <div class="panel-section">
+        <h2>Add a counter</h2>
+        <div class="form-row">
+          <label>Label</label>
+          <input id="newLabel" type="text" placeholder="Example: beneficiaries">
+        </div>
+        <div class="form-row">
+          <label>Style</label>
+          <select id="newStyle">
+            <option value="glow-azure">Glow Azure</option>
+            <option value="glow-rose">Glow Rose</option>
+            <option value="glow-lime">Glow Lime</option>
+            <option value="glow-violet">Glow Violet</option>
+            <option value="glow-amber">Glow Amber</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Text size</label>
+          <input id="newSize" type="range" min="16" max="128" value="48">
+        </div>
+        <button id="addCounter" class="primary-btn">Create counter</button>
+        <p class="hint">Drag each counter directly on the video to place it. Hold Shift to snap to grid.</p>
+      </div>
+
+      <div class="panel-section">
+        <h2>Keyframes</h2>
+        <div class="form-row">
+          <label>Target counter</label>
+          <select id="kfCounter"></select>
+        </div>
+        <div class="form-row two">
+          <div>
+            <label>Time</label>
+            <input id="kfTime" type="text" placeholder="mm:ss or hh:mm:ss">
+            <button id="useNow" class="ghost-btn small">Use current</button>
+          </div>
+          <div>
+            <label>Value</label>
+            <input id="kfValue" type="number" step="1" placeholder="123">
+          </div>
+        </div>
+        <button id="addKeyframe" class="primary-btn">Add keyframe</button>
+        <p class="hint">Add multiple keyframes per counter. Values will animate smoothly between keyframes.</p>
+        <div id="keyframeList" class="keyframe-list"></div>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="site-footer">
+    <p>Built for creators who want delightful counters that flow with their story.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+
+</html>
