@@ -35,6 +35,7 @@ const deleteSelectedBtn = $("#deleteSelected");
 const clearAllBtn = $("#clearAll");
 
 const exportVideoBtn = $("#exportVideo");
+const exportMp4Btn = $("#exportMp4");
 const stopExportBtn = $("#stopExport");
 
 let counters = [];
@@ -43,6 +44,7 @@ let selectedCounterId = null;
 
 // MediaRecorder state
 let recorder = null;
+let requestedFormat = "webm";
 let recordedChunks = [];
 let exporting = false;
 let rafId = null;
@@ -568,7 +570,8 @@ function setupHiDPICanvas(canvas, w, h){
 }
 
 // Export video with overlays including audio
-function startExport() {
+function startExport(format = "webm") {
+  requestedFormat = format;
   if (!video.src) { alert("Upload a video first"); return; }
   const w = video.videoWidth || 1280;
   const h = video.videoHeight || 720;
@@ -597,16 +600,41 @@ function startExport() {
              : "video/webm";
   recorder = new MediaRecorder(canvasStream, { mimeType: mime });
   recorder.ondataavailable = (e) => { if (e.data && e.data.size) recordedChunks.push(e.data); };
-  recorder.onstop = () => {
+  recorder.onstop = async () => {
     const blob = new Blob(recordedChunks, { type: mime });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = "glow-tally-export.webm"; a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1500);
+
+    // Hide canvas and reset state
     renderCanvas.style.display = "none";
     exporting = false;
     exportVideoBtn.disabled = false;
     stopExportBtn.disabled = true;
+    if (exportMp4Btn) exportMp4Btn.disabled = false;
+
+    if (requestedFormat === "webm") {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = "glow-tally-export.webm"; a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+      return;
+    }
+
+    // Convert to MP4 using ffmpeg.wasm
+    try {
+      if (exportMp4Btn) { exportMp4Btn.textContent = "Converting to MP4 0%"; exportMp4Btn.disabled = true; }
+      const mp4Blob = await convertWebMToMP4(blob, (p) => {
+        const pct = Math.max(0, Math.min(100, Math.round((p || 0) * 100)));
+        if (exportMp4Btn) exportMp4Btn.textContent = `Converting to MP4 ${pct}%`;
+      });
+      const url = URL.createObjectURL(mp4Blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = "glow-tally-export.mp4"; a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+    } catch (err) {
+      console.error(err);
+      alert("MP4 conversion failed. You can still use the WebM export.");
+    } finally {
+      if (exportMp4Btn) { exportMp4Btn.textContent = "Export MP4"; exportMp4Btn.disabled = false; }
+    }
   };
 
   exporting = true;
@@ -634,6 +662,35 @@ function startExport() {
   video.addEventListener("ended", onEnded);
 }
 
+
+// helper for WebM to MP4 using ffmpeg.wasm
+async function convertWebMToMP4(webmBlob, onProgress){
+  if (!(window.FFmpeg && FFmpeg.createFFmpeg)) {
+    throw new Error("FFmpeg library not loaded");
+  }
+  const { createFFmpeg, fetchFile } = FFmpeg;
+  const ffmpeg = createFFmpeg({
+    log: true,
+    progress: ({ ratio }) => { if (typeof onProgress === "function") onProgress(ratio || 0); }
+  });
+  await ffmpeg.load();
+  ffmpeg.FS("writeFile", "input.webm", await fetchFile(webmBlob));
+  await ffmpeg.run(
+    "-i", "input.webm",
+    "-c:v", "libx264",
+    "-pix_fmt", "yuv420p",
+    "-preset", "medium",
+    "-movflags", "+faststart",
+    "-c:a", "aac",
+    "output.mp4"
+  );
+  const data = ffmpeg.FS("readFile", "output.mp4");
+  const mp4Blob = new Blob([data.buffer], { type: "video/mp4" });
+  try { ffmpeg.FS("unlink", "input.webm"); } catch(e){}
+  try { ffmpeg.FS("unlink", "output.mp4"); } catch(e){}
+  return mp4Blob;
+}
+
 function stopExport() {
   if (!exporting) return;
   exporting = false;
@@ -641,8 +698,9 @@ function stopExport() {
   try { recorder && recorder.state !== "inactive" && recorder.stop(); } catch(e){}
 }
 
-exportVideoBtn.addEventListener("click", startExport);
+exportVideoBtn.addEventListener("click", () => startExport("webm"));
 stopExportBtn.addEventListener("click", stopExport);
+exportMp4Btn && exportMp4Btn.addEventListener("click", () => startExport("mp4"));
 
 document.addEventListener("DOMContentLoaded", () => {
   durationEl.textContent = "00:00";
