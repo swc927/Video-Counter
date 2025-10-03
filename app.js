@@ -1,6 +1,8 @@
+
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => Array.from(document.querySelectorAll(sel));
 
+const stage = $("#videoStage");
 const video = $("#video");
 const overlay = $("#overlay");
 const videoInput = $("#videoInput");
@@ -54,9 +56,7 @@ function deleteCounterById(id) {
   const idx = counters.findIndex((c) => c.id === id);
   if (idx === -1) return;
   const c = counters[idx];
-  try {
-    c.el.remove();
-  } catch (e) {}
+  try { c.el.remove(); } catch (e) {}
   counters.splice(idx, 1);
   updateKfCounterOptions();
   refreshKeyframeList();
@@ -64,11 +64,7 @@ function deleteCounterById(id) {
 }
 
 function clearAllCounters() {
-  counters.forEach((c) => {
-    try {
-      c.el.remove();
-    } catch (e) {}
-  });
+  counters.forEach((c) => { try { c.el.remove(); } catch (e) {} });
   counters = [];
   selectedCounterId = null;
   updateKfCounterOptions();
@@ -89,46 +85,29 @@ function fmtTime(t) {
   const m = Math.floor((t % 3600) / 60);
   const s = t % 60;
   return h > 0
-    ? `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(
-        s
-      ).padStart(2, "0")}`
+    ? `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`
     : `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
-
 function parseTime(s) {
   if (!s) return null;
   const parts = s.split(":").map((x) => x.trim());
   if (parts.some((p) => p === "" || isNaN(p))) return null;
-  let h = 0,
-    m = 0,
-    sec = 0;
-  if (parts.length === 3) {
-    [h, m, sec] = parts.map(Number);
-  } else if (parts.length === 2) {
-    [m, sec] = parts.map(Number);
-  } else if (parts.length === 1) {
-    sec = Number(parts[0]);
-  } else return null;
-  return h * 3600 + m * 60 + sec;
+  let h = 0, m = 0, sec = 0;
+  if (parts.length === 3) [h,m,sec] = parts.map(Number);
+  else if (parts.length === 2) [m,sec] = parts.map(Number);
+  else if (parts.length === 1) sec = Number(parts[0]);
+  else return null;
+  return h*3600 + m*60 + sec;
 }
-
-function clamp01(x) {
-  return Math.max(0, Math.min(1, x));
-}
-
-function addOption(select, value, text) {
-  const opt = document.createElement("option");
-  opt.value = value;
-  opt.textContent = text;
-  select.appendChild(opt);
-}
+function clamp01(x){ return Math.max(0, Math.min(1, x)); }
+function addOption(select, value, text){ const opt=document.createElement("option"); opt.value=value; opt.textContent=text; select.appendChild(opt); }
 
 function refreshKeyframeList() {
   keyframeList.innerHTML = "";
   counters.forEach((c) => {
     if (!c.keyframes || c.keyframes.length === 0) return;
     c.keyframes.sort((a, b) => a.t - b.t);
-    c.keyframes.forEach((kf, idx) => {
+    c.keyframes.forEach((kf) => {
       const item = document.createElement("div");
       item.className = "kf-item";
       const badge = document.createElement("span");
@@ -147,70 +126,59 @@ function refreshKeyframeList() {
           refreshKeyframeList();
         }
       });
-      item.appendChild(badge);
-      item.appendChild(time);
-      item.appendChild(val);
-      item.appendChild(del);
+      item.appendChild(badge); item.appendChild(time); item.appendChild(val); item.appendChild(del);
       keyframeList.appendChild(item);
     });
   });
 }
-
 function updateKfCounterOptions() {
   kfCounter.innerHTML = "";
   counters.forEach((c) => addOption(kfCounter, c.id, `${c.label} #${c.id}`));
 }
 
-videoInput.addEventListener("change", (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const url = URL.createObjectURL(file);
-  video.src = url;
-  video.play().catch(() => {});
-});
-
-playPause.addEventListener("click", () => {
-  if (video.paused) video.play();
-  else video.pause();
-});
-jumpBack.addEventListener("click", () => {
-  video.currentTime = Math.max(0, video.currentTime - 1);
-});
-jumpFwd.addEventListener("click", () => {
-  video.currentTime = Math.min(
-    video.duration || Infinity,
-    video.currentTime + 1
-  );
-});
-
-snapKeyframes.addEventListener("click", () => {
-  const t = video.currentTime || 0;
-  let next = Infinity;
-  counters.forEach(
-    (c) =>
-      c.keyframes &&
-      c.keyframes.forEach((k) => {
-        if (k.t > t && k.t < next) next = k.t;
-      })
-  );
-  if (next < Infinity) video.currentTime = next;
-});
+// Keep overlay height equal to actual video element box height
+function syncOverlaySize(){
+  // Because overlay is absolutely positioned with inset 0 in the stage,
+  // and the stage height follows the video element height, CSS already matches them.
+  // This function exists to trigger any future layout dependent logic if needed.
+}
 
 video.addEventListener("loadedmetadata", () => {
   durationEl.textContent = fmtTime(video.duration | 0);
+  syncOverlaySize();
 });
 video.addEventListener("timeupdate", () => {
   currentTimeEl.textContent = fmtTime(video.currentTime | 0);
 });
 
-toggleGrid.addEventListener("click", () => {
-  overlay.classList.toggle("show-grid");
+// File input
+videoInput.addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const url = URL.createObjectURL(file);
+  video.src = url;
+  const play = video.play();
+  if (play && play.catch) play.catch(()=>{});
 });
 
+playPause.addEventListener("click", () => { if (video.paused) video.play(); else video.pause(); });
+jumpBack.addEventListener("click", () => { video.currentTime = Math.max(0, video.currentTime - 1); });
+jumpFwd.addEventListener("click", () => {
+  video.currentTime = Math.min(video.duration || Infinity, video.currentTime + 1);
+});
+snapKeyframes.addEventListener("click", () => {
+  const t = video.currentTime || 0;
+  let next = Infinity;
+  counters.forEach((c) => c.keyframes && c.keyframes.forEach((k) => { if (k.t > t && k.t < next) next = k.t; }));
+  if (next < Infinity) video.currentTime = next;
+});
+toggleGrid.addEventListener("click", () => { overlay.classList.toggle("show-grid"); });
+
+// Add counter with resize handle
 addCounterBtn.addEventListener("click", () => {
   const label = (newLabel.value || "Counter").trim();
   const style = newStyle.value;
-  const size = Number(newSize.value) || 48;
+  const size = Number(newSize.value) || 64;
   const id = idSeed++;
 
   const el = document.createElement("div");
@@ -219,35 +187,25 @@ addCounterBtn.addEventListener("click", () => {
   el.style.left = "50%";
   el.style.top = "50%";
   el.innerHTML = `
-    <div class="label" style="font-size:${Math.round(
-      size * 0.45
-    )}px">${label}</div>
+    <div class="label" style="font-size:${Math.round(size * 0.45)}px">${label}</div>
     <div class="value" style="font-size:${size}px">0</div>
     <div class="close" title="Remove">×</div>
+    <div class="resize" title="Resize"></div>
   `;
   overlay.appendChild(el);
 
-  const c = {
-    id,
-    label,
-    style,
-    size,
-    x: 50,
-    y: 50,
-    el,
-    keyframes: [],
-    display: 0,
-  };
+  const c = { id, label, style, size, x:50, y:50, el, keyframes:[], display:0 };
   counters.push(c);
   updateKfCounterOptions();
 
   let shift = false;
   function onDown(ev) {
+    if (ev.target.classList.contains("resize")) return; // resize has own handler
     ev.preventDefault();
-    const e = ev.touches ? ev.touches[0] : ev;
+    const start = ev.touches ? ev.touches[0] : ev;
     shift = ev.shiftKey;
     window.addEventListener("mousemove", onMove);
-    window.addEventListener("touchmove", onMove, { passive: false });
+    window.addEventListener("touchmove", onMove, { passive:false });
     window.addEventListener("mouseup", onUp);
     window.addEventListener("touchend", onUp);
   }
@@ -264,8 +222,7 @@ addCounterBtn.addEventListener("click", () => {
     }
     nx = Math.max(0, Math.min(100, nx));
     ny = Math.max(0, Math.min(100, ny));
-    c.x = nx;
-    c.y = ny;
+    c.x = nx; c.y = ny;
     el.style.left = `${c.x}%`;
     el.style.top = `${c.y}%`;
   }
@@ -276,8 +233,9 @@ addCounterBtn.addEventListener("click", () => {
     window.removeEventListener("touchend", onUp);
   }
   el.addEventListener("mousedown", onDown);
-  el.addEventListener("touchstart", onDown, { passive: false });
+  el.addEventListener("touchstart", onDown, { passive:false });
 
+  // Selection and delete button
   el.addEventListener("click", (ev) => {
     if (ev.target.classList.contains("close")) return;
     selectCounter(id);
@@ -286,31 +244,50 @@ addCounterBtn.addEventListener("click", () => {
     ev.stopPropagation();
     deleteCounterById(id);
   });
+
+  // Resize logic
+  const handle = el.querySelector(".resize");
+  let resizing = false;
+  let startSize = size;
+  let startX = 0, startY = 0;
+  handle.addEventListener("mousedown", (ev) => {
+    ev.preventDefault();
+    resizing = true;
+    const p = ev.touches ? ev.touches[0] : ev;
+    startX = p.clientX; startY = p.clientY;
+    startSize = c.size;
+    window.addEventListener("mousemove", onResizeMove);
+    window.addEventListener("mouseup", onResizeUp);
+  });
+  function onResizeMove(ev){
+    if (!resizing) return;
+    const p = ev.touches ? ev.touches[0] : ev;
+    const delta = Math.max(p.clientX - startX, p.clientY - startY);
+    let next = Math.min(200, Math.max(16, Math.round(startSize + delta * 0.6)));
+    // optional snap when grid visible
+    if (overlay.classList.contains("show-grid")) next = Math.round(next / 2) * 2;
+    c.size = next;
+    el.querySelector(".label").style.fontSize = Math.round(c.size * 0.45) + "px";
+    el.querySelector(".value").style.fontSize = c.size + "px";
+  }
+  function onResizeUp(){
+    resizing = false;
+    window.removeEventListener("mousemove", onResizeMove);
+    window.removeEventListener("mouseup", onResizeUp);
+  }
 });
 
-useNowBtn.addEventListener("click", () => {
-  kfTime.value = fmtTime(video.currentTime | 0);
-});
+useNowBtn.addEventListener("click", () => { kfTime.value = fmtTime(video.currentTime | 0); });
 
 addKeyframeBtn.addEventListener("click", () => {
   const id = Number(kfCounter.value);
   const c = counters.find((x) => x.id === id);
-  if (!c) {
-    alert("Pick a counter first");
-    return;
-  }
+  if (!c) { alert("Pick a counter first"); return; }
 
   const t = parseTime(kfTime.value);
-  if (t == null) {
-    alert("Enter a valid time like 0:10 or 1:02:03");
-    return;
-  }
-
+  if (t == null) { alert("Enter a valid time like 0:10 or 1:02:03"); return; }
   const v = Number(kfValue.value);
-  if (!Number.isFinite(v)) {
-    alert("Enter a valid integer value");
-    return;
-  }
+  if (!Number.isFinite(v)) { alert("Enter a valid integer value"); return; }
 
   c.keyframes.push({ t, v: Math.round(v) });
   c.keyframes.sort((a, b) => a.t - b.t);
@@ -324,23 +301,15 @@ function getCounterValueAt(c, t) {
   if (t < kfs[0].t) return null;
   if (t >= kfs[kfs.length - 1].t) return kfs[kfs.length - 1].v;
 
-  let i0 = 0,
-    i1 = 0;
+  let i0 = 0, i1 = 0;
   for (let i = 0; i < kfs.length - 1; i++) {
-    if (t >= kfs[i].t && t < kfs[i + 1].t) {
-      i0 = i;
-      i1 = i + 1;
-      break;
-    }
+    if (t >= kfs[i].t && t < kfs[i + 1].t) { i0 = i; i1 = i + 1; break; }
   }
-  const k0 = kfs[i0],
-    k1 = kfs[i1];
+  const k0 = kfs[i0], k1 = kfs[i1];
   const denom = Math.max(0.000001, k1.t - k0.t);
   const p = clamp01((t - k0.t) / denom);
   const v = k0.v + (k1.v - k0.v) * p;
-  return k1.v >= k0.v
-    ? Math.floor(Math.min(k1.v, v))
-    : Math.ceil(Math.max(k1.v, v));
+  return k1.v >= k0.v ? Math.floor(Math.min(k1.v, v)) : Math.ceil(Math.max(k1.v, v));
 }
 
 function updateCounters() {
@@ -349,17 +318,12 @@ function updateCounters() {
     const el = c.el;
     const valEl = el.querySelector(".value");
     const v = getCounterValueAt(c, t);
-    if (v == null) {
-      el.style.opacity = 0.0;
-      return;
-    }
+    if (v == null) { el.style.opacity = 0.0; return; }
     el.style.opacity = 1.0;
     if (c.display !== v) {
       c.display = v;
       valEl.textContent = String(v);
-      el.classList.remove("tick");
-      void el.offsetWidth;
-      el.classList.add("tick");
+      el.classList.remove("tick"); void el.offsetWidth; el.classList.add("tick");
     }
   });
   requestAnimationFrame(updateCounters);
@@ -369,24 +333,14 @@ requestAnimationFrame(updateCounters);
 // Export config and import config
 saveConfig.addEventListener("click", () => {
   const data = counters.map((c) => ({
-    id: c.id,
-    label: c.label,
-    style: c.style,
-    size: c.size,
-    x: c.x,
-    y: c.y,
-    keyframes: c.keyframes,
+    id: c.id, label: c.label, style: c.style, size: c.size, x: c.x, y: c.y, keyframes: c.keyframes,
   }));
-  const json = JSON.stringify({ version: 1, counters: data }, null, 2);
+  const json = JSON.stringify({ version: 2, counters: data }, null, 2);
   const blob = new Blob([json], { type: "application/json" });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "glow-tally-config.json";
-  a.click();
+  const a = document.createElement("a"); a.href = url; a.download = "glow-tally-config.json"; a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 });
-
 loadConfig.addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (!file) return;
@@ -397,47 +351,37 @@ loadConfig.addEventListener("change", (e) => {
       if (!obj || !Array.isArray(obj.counters)) throw new Error("Bad file");
       clearAllCounters();
       let maxId = 0;
-      obj.counters.forEach((c0) => {
-        if (c0.id && c0.id > maxId) maxId = c0.id;
-      });
+      obj.counters.forEach((c0) => { if (c0.id && c0.id > maxId) maxId = c0.id; });
       idSeed = Math.max(idSeed, maxId + 1);
       obj.counters.forEach((c0) => {
         const id = c0.id || idSeed++;
         const el = document.createElement("div");
         el.className = `counter ${c0.style || "glow-azure"}`;
         el.dataset.id = id;
-        el.style.left = `${c0.x || 50}%`;
-        el.style.top = `${c0.y || 50}%`;
-        const size = c0.size || 48;
+        el.style.left = `${c0.x ?? 50}%`;
+        el.style.top = `${c0.y ?? 50}%`;
+        const size = c0.size || 64;
         el.innerHTML = `
-          <div class="label" style="font-size:${Math.round(size * 0.45)}px">${
-          c0.label || "Counter"
-        }</div>
+          <div class="label" style="font-size:${Math.round(size * 0.45)}px">${c0.label || "Counter"}</div>
           <div class="value" style="font-size:${size}px">0</div>
           <div class="close" title="Remove">×</div>
+          <div class="resize" title="Resize"></div>
         `;
         overlay.appendChild(el);
-
         const c = {
-          id,
-          label: c0.label || "Counter",
-          style: c0.style || "glow-azure",
-          size,
-          x: c0.x || 50,
-          y: c0.y || 50,
-          el,
-          keyframes: Array.isArray(c0.keyframes) ? c0.keyframes : [],
-          display: 0,
+          id, label: c0.label || "Counter", style: c0.style || "glow-azure",
+          size, x: c0.x ?? 50, y: c0.y ?? 50, el, keyframes: Array.isArray(c0.keyframes) ? c0.keyframes : [], display: 0,
         };
         counters.push(c);
 
+        // drag
         let shift = false;
         function onDown(ev) {
+          if (ev.target.classList.contains("resize")) return;
           ev.preventDefault();
-          const e = ev.touches ? ev.touches[0] : ev;
           shift = ev.shiftKey;
           window.addEventListener("mousemove", onMove);
-          window.addEventListener("touchmove", onMove, { passive: false });
+          window.addEventListener("touchmove", onMove, { passive:false });
           window.addEventListener("mouseup", onUp);
           window.addEventListener("touchend", onUp);
         }
@@ -454,8 +398,7 @@ loadConfig.addEventListener("change", (e) => {
           }
           nx = Math.max(0, Math.min(100, nx));
           ny = Math.max(0, Math.min(100, ny));
-          c.x = nx;
-          c.y = ny;
+          c.x = nx; c.y = ny;
           el.style.left = `${c.x}%`;
           el.style.top = `${c.y}%`;
         }
@@ -466,48 +409,60 @@ loadConfig.addEventListener("change", (e) => {
           window.removeEventListener("touchend", onUp);
         }
         el.addEventListener("mousedown", onDown);
-        el.addEventListener("touchstart", onDown, { passive: false });
+        el.addEventListener("touchstart", onDown, { passive:false });
 
-        el.addEventListener("click", (ev) => {
-          if (ev.target.classList.contains("close")) return;
-          selectCounter(id);
+        el.addEventListener("click", (ev) => { if (!ev.target.classList.contains("close")) selectCounter(id); });
+        el.querySelector(".close").addEventListener("click", (ev) => { ev.stopPropagation(); deleteCounterById(id); });
+
+        // resize
+        const handle = el.querySelector(".resize");
+        let resizing = false;
+        let startSize = size;
+        let startX = 0, startY = 0;
+        handle.addEventListener("mousedown", (ev) => {
+          ev.preventDefault();
+          resizing = true;
+          const p = ev.touches ? ev.touches[0] : ev;
+          startX = p.clientX; startY = p.clientY;
+          startSize = c.size;
+          window.addEventListener("mousemove", onResizeMove);
+          window.addEventListener("mouseup", onResizeUp);
         });
-        el.querySelector(".close").addEventListener("click", (ev) => {
-          ev.stopPropagation();
-          deleteCounterById(id);
-        });
+        function onResizeMove(ev){
+          if (!resizing) return;
+          const p = ev.touches ? ev.touches[0] : ev;
+          const delta = Math.max(p.clientX - startX, p.clientY - startY);
+          let next = Math.min(200, Math.max(16, Math.round(startSize + delta * 0.6)));
+          if (overlay.classList.contains("show-grid")) next = Math.round(next / 2) * 2;
+          c.size = next;
+          el.querySelector(".label").style.fontSize = Math.round(c.size * 0.45) + "px";
+          el.querySelector(".value").style.fontSize = c.size + "px";
+        }
+        function onResizeUp(){
+          resizing = false;
+          window.removeEventListener("mousemove", onResizeMove);
+          window.removeEventListener("mouseup", onResizeUp);
+        }
       });
-      updateKfCounterOptions();
-      refreshKeyframeList();
-    } catch (err) {
-      alert("Could not read config");
-    }
+      updateKfCounterOptions(); refreshKeyframeList();
+    } catch (err) { alert("Could not read config"); }
   };
   reader.readAsText(file);
 });
 
 // Delete controls
 deleteSelectedBtn.addEventListener("click", () => {
-  if (!selectedCounterId) {
-    alert("Select a counter first");
-    return;
-  }
+  if (!selectedCounterId) { alert("Select a counter first"); return; }
   deleteCounterById(selectedCounterId);
 });
 clearAllBtn.addEventListener("click", () => {
   if (confirm("Remove all counters?")) clearAllCounters();
 });
 
-// Export video with overlays using MediaRecorder
+// Drawing counters onto canvas
 function drawCanvasFrame(ctx, w, h, t) {
-  // draw video frame
-  try {
-    ctx.drawImage(video, 0, 0, w, h);
-  } catch (e) {
-    /* ignore */
-  }
+  try { ctx.drawImage(video, 0, 0, w, h); } catch (e) {}
 
-  // draw counters
   counters.forEach((c) => {
     const v = getCounterValueAt(c, t);
     if (v == null) return;
@@ -516,30 +471,12 @@ function drawCanvasFrame(ctx, w, h, t) {
     const y = (c.y / 100) * h;
 
     // style mapping
-    let gradTop = "#ffffff",
-      gradBottom = "#ffffff",
-      glow = "rgba(255,255,255,0.5)";
-    if (c.style.includes("glow-azure")) {
-      gradTop = "#e6f7ff";
-      gradBottom = "#8ad4ff";
-      glow = "rgba(138,212,255,0.5)";
-    } else if (c.style.includes("glow-rose")) {
-      gradTop = "#ffe7f2";
-      gradBottom = "#ff9bc6";
-      glow = "rgba(255,155,198,0.5)";
-    } else if (c.style.includes("glow-lime")) {
-      gradTop = "#f0ffd8";
-      gradBottom = "#aeff7f";
-      glow = "rgba(174,255,127,0.5)";
-    } else if (c.style.includes("glow-violet")) {
-      gradTop = "#efe6ff";
-      gradBottom = "#b892ff";
-      glow = "rgba(184,146,255,0.5)";
-    } else if (c.style.includes("glow-amber")) {
-      gradTop = "#fff4d6";
-      gradBottom = "#ffe084";
-      glow = "rgba(255,224,132,0.5)";
-    }
+    let gradTop = "#ffffff", gradBottom = "#ffffff", glow = "rgba(255,255,255,0.5)";
+    if (c.style.includes("glow-azure")) { gradTop="#e6f7ff"; gradBottom="#8ad4ff"; glow="rgba(138,212,255,0.5)"; }
+    else if (c.style.includes("glow-rose")) { gradTop="#ffe7f2"; gradBottom="#ff9bc6"; glow="rgba(255,155,198,0.5)"; }
+    else if (c.style.includes("glow-lime")) { gradTop="#f0ffd8"; gradBottom="#aeff7f"; glow="rgba(174,255,127,0.5)"; }
+    else if (c.style.includes("glow-violet")) { gradTop="#efe6ff"; gradBottom="#b892ff"; glow="rgba(184,146,255,0.5)"; }
+    else if (c.style.includes("glow-amber")) { gradTop="#fff4d6"; gradBottom="#ffe084"; glow="rgba(255,224,132,0.5)"; }
 
     ctx.save();
     ctx.textAlign = "center";
@@ -553,14 +490,8 @@ function drawCanvasFrame(ctx, w, h, t) {
     ctx.fillText(c.label, x, y - c.size * 0.8);
 
     // value with gradient
-    const grad = ctx.createLinearGradient(
-      0,
-      y - c.size * 0.6,
-      0,
-      y + c.size * 0.6
-    );
-    grad.addColorStop(0, gradTop);
-    grad.addColorStop(1, gradBottom);
+    const grad = ctx.createLinearGradient(0, y - c.size * 0.6, 0, y + c.size * 0.6);
+    grad.addColorStop(0, gradTop); grad.addColorStop(1, gradBottom);
     ctx.font = `800 ${c.size}px Inter, Arial, sans-serif`;
     ctx.fillStyle = grad;
     ctx.fillText(String(v), x, y);
@@ -568,37 +499,54 @@ function drawCanvasFrame(ctx, w, h, t) {
   });
 }
 
+// HiDPI safe canvas setup
+function setupHiDPICanvas(canvas, w, h){
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  canvas.width = Math.round(w * dpr);
+  canvas.height = Math.round(h * dpr);
+  canvas.style.width = `${w}px`;
+  canvas.style.height = `${h}px`;
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return ctx;
+}
+
+// Export video with overlays including audio
 function startExport() {
-  if (!video.src) {
-    alert("Upload a video first");
-    return;
-  }
+  if (!video.src) { alert("Upload a video first"); return; }
   const w = video.videoWidth || 1280;
   const h = video.videoHeight || 720;
-  renderCanvas.width = w;
-  renderCanvas.height = h;
+
+  const ctx = setupHiDPICanvas(renderCanvas, w, h);
   renderCanvas.style.display = "block";
 
-  const ctx = renderCanvas.getContext("2d");
-  const stream = renderCanvas.captureStream(30);
+  const canvasStream = renderCanvas.captureStream(30);
+
+  // merge audio from the media element
+  try {
+    const vs = video.captureStream ? video.captureStream() : null;
+    if (vs) {
+      const audioTracks = vs.getAudioTracks();
+      if (audioTracks && audioTracks.length) {
+        audioTracks.forEach(tr => canvasStream.addTrack(tr));
+      }
+    }
+  } catch (e) {
+    console.warn("Audio capture not available", e);
+  }
+
   recordedChunks = [];
-  const mime = MediaRecorder.isTypeSupported("video/webm;codecs=vp9")
-    ? "video/webm;codecs=vp9"
-    : MediaRecorder.isTypeSupported("video/webm;codecs=vp8")
-    ? "video/webm;codecs=vp8"
-    : "video/webm";
-  recorder = new MediaRecorder(stream, { mimeType: mime });
-  recorder.ondataavailable = (e) => {
-    if (e.data && e.data.size) recordedChunks.push(e.data);
-  };
+  const mime = MediaRecorder.isTypeSupported("video/webm;codecs=vp9") ? "video/webm;codecs=vp9"
+             : MediaRecorder.isTypeSupported("video/webm;codecs=vp8") ? "video/webm;codecs=vp8"
+             : "video/webm";
+  recorder = new MediaRecorder(canvasStream, { mimeType: mime });
+  recorder.ondataavailable = (e) => { if (e.data && e.data.size) recordedChunks.push(e.data); };
   recorder.onstop = () => {
     const blob = new Blob(recordedChunks, { type: mime });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url;
-    a.download = "glow-tally-export.webm";
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    a.href = url; a.download = "glow-tally-export.webm"; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
     renderCanvas.style.display = "none";
     exporting = false;
     exportVideoBtn.disabled = false;
@@ -609,18 +557,13 @@ function startExport() {
   exportVideoBtn.disabled = true;
   stopExportBtn.disabled = false;
 
-  // Reset and play from start for a complete export
-  try {
-    video.currentTime = 0;
-  } catch (e) {}
+  // Reset and play from the start for clean export
+  try { video.currentTime = 0; } catch(e){}
   const playPromise = video.play();
-  if (playPromise && playPromise.catch) {
-    playPromise.catch(() => {});
-  }
+  if (playPromise && playPromise.catch) playPromise.catch(()=>{});
 
   recorder.start();
 
-  // Drive the canvas draw loop
   function loop() {
     if (!exporting) return;
     drawCanvasFrame(ctx, w, h, video.currentTime || 0);
@@ -628,7 +571,6 @@ function startExport() {
   }
   loop();
 
-  // Stop automatically when the video ends
   const onEnded = () => {
     stopExport();
     video.removeEventListener("ended", onEnded);
@@ -639,12 +581,8 @@ function startExport() {
 function stopExport() {
   if (!exporting) return;
   exporting = false;
-  try {
-    if (rafId) cancelAnimationFrame(rafId);
-  } catch (e) {}
-  try {
-    recorder && recorder.state !== "inactive" && recorder.stop();
-  } catch (e) {}
+  try { if (rafId) cancelAnimationFrame(rafId); } catch(e){}
+  try { recorder && recorder.state !== "inactive" && recorder.stop(); } catch(e){}
 }
 
 exportVideoBtn.addEventListener("click", startExport);
