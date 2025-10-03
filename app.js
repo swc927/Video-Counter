@@ -312,13 +312,23 @@ function getCounterValueAt(c, t) {
   return k1.v >= k0.v ? Math.floor(Math.min(k1.v, v)) : Math.ceil(Math.max(k1.v, v));
 }
 
+
 function updateCounters() {
   const t = video.currentTime || 0;
   counters.forEach((c) => {
     const el = c.el;
     const valEl = el.querySelector(".value");
     const v = getCounterValueAt(c, t);
-    if (v == null) { el.style.opacity = 0.0; return; }
+
+    if (v == null) {
+      // preview before first keyframe: show first keyframe value or 0, slightly transparent
+      const kfs = c.keyframes || [];
+      const previewVal = kfs.length ? kfs.slice().sort((a,b)=>a.t-b.t)[0].v : 0;
+      valEl.textContent = String(previewVal);
+      el.style.opacity = 0.6;
+      return;
+    }
+
     el.style.opacity = 1.0;
     if (c.display !== v) {
       c.display = v;
@@ -329,6 +339,7 @@ function updateCounters() {
   requestAnimationFrame(updateCounters);
 }
 requestAnimationFrame(updateCounters);
+
 
 // Export config and import config
 saveConfig.addEventListener("click", () => {
