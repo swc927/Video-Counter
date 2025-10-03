@@ -1,3 +1,4 @@
+
 :root{
   --bg: #080A10;
   --panel: #0F1320;
@@ -33,12 +34,23 @@ body{
   display:grid; grid-template-columns: 1fr 360px; gap:20px
 }
 @media (max-width: 1000px){ .layout{ grid-template-columns: 1fr } }
-.video-wrap{
-  position:relative; width:100%; background:#0b0f1a;
-  border:1px solid rgba(255,255,255,.06); border-radius: var(--radius);
-  overflow:hidden; box-shadow: var(--shadow); aspect-ratio: 16 / 9;
+
+/* Video stage grows to the actual video box. No forced aspect box. */
+.video-stage{
+  position:relative;
+  width:100%;
+  background:#0b0f1a;
+  border:1px solid rgba(255,255,255,.06);
+  border-radius: var(--radius);
+  overflow:hidden;
+  box-shadow: var(--shadow);
 }
-.video{ width:100%; height:100%; object-fit:contain; display:block; background:#000 }
+.video{
+  display:block;
+  width:100%;
+  height:auto; /* preserves the intrinsic aspect ratio */
+  background:#000;
+}
 .overlay{ position:absolute; inset:0; pointer-events:none }
 .overlay-grid{
   position:absolute; inset:0; display:none;
@@ -47,21 +59,7 @@ body{
   background-size: 40px 40px, 40px 40px; mix-blend-mode: screen;
 }
 .overlay.show-grid .overlay-grid{display:block}
-.counter{ position:absolute; cursor:grab; pointer-events:auto; user-select:none; text-align:center; transform: translate(-50%, -50%) }
-.counter:active{ cursor:grabbing }
-.counter .label{ font-weight:600; opacity:.85; letter-spacing:.5px; text-shadow: 0 0 18px rgba(255,255,255,.18) }
-.counter .value{ font-weight:800; line-height:1.1; filter: drop-shadow(0 2px 24px rgba(255,255,255,.3)); transition: transform .15s ease }
-.counter.tick .value{ transform: scale(1.08) }
-.glow-azure .label, .glow-azure .value{ color:#c7ebff; text-shadow: 0 0 24px rgba(138, 212, 255, .45), 0 0 60px rgba(138, 212, 255, .2) }
-.glow-azure .value{ background: linear-gradient(180deg, #e6f7ff, #8ad4ff); -webkit-background-clip:text; background-clip:text; color:transparent }
-.glow-rose .label, .glow-rose .value{ color:#ffd1e6; text-shadow: 0 0 24px rgba(255, 155, 198, .4), 0 0 60px rgba(255, 155, 198, .15) }
-.glow-rose .value{ background: linear-gradient(180deg, #ffe7f2, #ff9bc6); -webkit-background-clip:text; background-clip:text; color:transparent }
-.glow-lime .label, .glow-lime .value{ color:#e3ffbf; text-shadow: 0 0 24px rgba(174, 255, 127, .35), 0 0 60px rgba(174, 255, 127, .12) }
-.glow-lime .value{ background: linear-gradient(180deg, #f0ffd8, #aeff7f); -webkit-background-clip:text; background-clip:text; color:transparent }
-.glow-violet .label, .glow-violet .value{ color:#e6d8ff; text-shadow: 0 0 24px rgba(184, 146, 255, .4), 0 0 60px rgba(184, 146, 255, .15) }
-.glow-violet .value{ background: linear-gradient(180deg, #efe6ff, #b892ff); -webkit-background-clip:text; background-clip:text; color:transparent }
-.glow-amber .label, .glow-amber .value{ color:#fff0cc; text-shadow: 0 0 24px rgba(255, 224, 132, .45), 0 0 60px rgba(255, 224, 132, .18) }
-.glow-amber .value{ background: linear-gradient(180deg, #fff4d6, #ffe084); -webkit-background-clip:text; background-clip:text; color:transparent }
+
 .panel{ background: var(--panel); border:1px solid rgba(255,255,255,.06); border-radius: var(--radius); box-shadow: var(--shadow); padding:16px; display:flex; flex-direction:column; gap:18px }
 .panel-section{ background: rgba(255,255,255,.02); border:1px solid rgba(255,255,255,.06); border-radius: 12px; padding:14px }
 .panel-section h2{ margin:0 0 12px 0; font-size:18px; opacity:.95 }
@@ -93,6 +91,12 @@ body{
 .kf-item button{ background: rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.08); color:var(--text); border-radius:8px; padding:6px 10px; cursor:pointer }
 .site-footer{ opacity:.8; text-align:center; font-size:14px; padding-bottom:40px }
 
+.counter{ position:absolute; cursor:grab; pointer-events:auto; user-select:none; text-align:center; transform: translate(-50%, -50%) }
+.counter:active{ cursor:grabbing }
+.counter .label{ font-weight:600; opacity:.85; letter-spacing:.5px; text-shadow: 0 0 18px rgba(255,255,255,.18) }
+.counter .value{ font-weight:800; line-height:1.1; filter: drop-shadow(0 2px 24px rgba(255,255,255,.3)); transition: transform .15s ease }
+.counter.tick .value{ transform: scale(1.08) }
+
 .counter.selected { outline: 2px solid rgba(255,255,255,.6); outline-offset: 2px; }
 .counter .close {
   position:absolute; top:-10px; right:-10px; width:24px; height:24px;
@@ -103,3 +107,29 @@ body{
 }
 .counter:hover .close { display:flex }
 .counter .close { display:none }
+
+/* Resize handle */
+.counter .resize {
+  position:absolute;
+  width:14px; height:14px;
+  right:-8px; bottom:-8px;
+  border-radius:3px;
+  background:#fff;
+  border:1px solid rgba(0,0,0,.5);
+  box-shadow: 0 2px 8px rgba(0,0,0,.4);
+  cursor:nwse-resize;
+  display:none;
+}
+.counter:hover .resize { display:block }
+
+/* Glow styles */
+.glow-azure .label, .glow-azure .value{ color:#c7ebff; text-shadow: 0 0 24px rgba(138, 212, 255, .45), 0 0 60px rgba(138, 212, 255, .2) }
+.glow-azure .value{ background: linear-gradient(180deg, #e6f7ff, #8ad4ff); -webkit-background-clip:text; background-clip:text; color:transparent }
+.glow-rose .label, .glow-rose .value{ color:#ffd1e6; text-shadow: 0 0 24px rgba(255, 155, 198, .4), 0 0 60px rgba(255, 155, 198, .15) }
+.glow-rose .value{ background: linear-gradient(180deg, #ffe7f2, #ff9bc6); -webkit-background-clip:text; background-clip:text; color:transparent }
+.glow-lime .label, .glow-lime .value{ color:#e3ffbf; text-shadow: 0 0 24px rgba(174, 255, 127, .35), 0 0 60px rgba(174, 255, 127, .12) }
+.glow-lime .value{ background: linear-gradient(180deg, #f0ffd8, #aeff7f); -webkit-background-clip:text; background-clip:text; color:transparent }
+.glow-violet .label, .glow-violet .value{ color:#e6d8ff; text-shadow: 0 0 24px rgba(184, 146, 255, .4), 0 0 60px rgba(184, 146, 255, .15) }
+.glow-violet .value{ background: linear-gradient(180deg, #efe6ff, #b892ff); -webkit-background-clip:text; background-clip:text; color:transparent }
+.glow-amber .label, .glow-amber .value{ color:#fff0cc; text-shadow: 0 0 24px rgba(255, 224, 132, .45), 0 0 60px rgba(255, 224, 132, .18) }
+.glow-amber .value{ background: linear-gradient(180deg, #fff4d6, #ffe084); -webkit-background-clip:text; background-clip:text; color:transparent }
