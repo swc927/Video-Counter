@@ -174,6 +174,46 @@ snapKeyframes.addEventListener("click", () => {
 });
 toggleGrid.addEventListener("click", () => { overlay.classList.toggle("show-grid"); });
 
+// Inline label editing
+function enableInlineLabelEditing(counterObj, labelEl){
+  function finishEdit(commit){
+    labelEl.contentEditable = "false";
+    labelEl.blur();
+    if (commit){
+      const text = labelEl.textContent.trim();
+      counterObj.label = text || "Counter";
+      updateKfCounterOptions();
+      refreshKeyframeList();
+    } else {
+      labelEl.textContent = counterObj.label;
+    }
+  }
+  labelEl.addEventListener("dblclick", (ev) => {
+    ev.stopPropagation();
+    labelEl.contentEditable = "true";
+    labelEl.spellcheck = false;
+    const range = document.createRange();
+    range.selectNodeContents(labelEl);
+    range.collapse(false);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    labelEl.focus();
+  });
+  labelEl.addEventListener("keydown", (ev) => {
+    if (ev.key === "Enter"){
+      ev.preventDefault();
+      finishEdit(true);
+    } else if (ev.key === "Escape"){
+      ev.preventDefault();
+      finishEdit(false);
+    }
+  });
+  labelEl.addEventListener("blur", () => finishEdit(true));
+}
+
+
+
 // Add counter with resize handle
 addCounterBtn.addEventListener("click", () => {
   const label = (newLabel.value || "Counter").trim();
@@ -195,12 +235,15 @@ addCounterBtn.addEventListener("click", () => {
   overlay.appendChild(el);
 
   const c = { id, label, style, size, x:50, y:50, el, keyframes:[], display:0 };
+  enableInlineLabelEditing(c, el.querySelector(".label"));
   counters.push(c);
   updateKfCounterOptions();
 
   let shift = false;
   function onDown(ev) {
-    if (ev.target.classList.contains("resize")) return; // resize has own handler
+    if (ev.target.classList.contains("resize")) return;
+          if (ev.target.closest(".label") && ev.target.closest(".label").isContentEditable) return; // resize has own handler
+    if (ev.target.closest(".label") && ev.target.closest(".label").isContentEditable) return;
     ev.preventDefault();
     const start = ev.touches ? ev.touches[0] : ev;
     shift = ev.shiftKey;
@@ -384,11 +427,13 @@ loadConfig.addEventListener("change", (e) => {
           size, x: c0.x ?? 50, y: c0.y ?? 50, el, keyframes: Array.isArray(c0.keyframes) ? c0.keyframes : [], display: 0,
         };
         counters.push(c);
+        enableInlineLabelEditing(c, el.querySelector(".label"));
 
         // drag
         let shift = false;
         function onDown(ev) {
           if (ev.target.classList.contains("resize")) return;
+          if (ev.target.closest(".label") && ev.target.closest(".label").isContentEditable) return;
           ev.preventDefault();
           shift = ev.shiftKey;
           window.addEventListener("mousemove", onMove);
