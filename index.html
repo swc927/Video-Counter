@@ -1,16 +1,14 @@
 <!doctype html>
 <html lang="en">
-
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Video Counter by SWC</title>
   <link rel="stylesheet" href="styles.css">
 </head>
-
 <body>
   <header class="site-header">
-    <h1 class="app-title">Video Counter <br> by SWC</h1>
+    <h1 class="app-title">Video Counter <span>by SWC</span></h1>
     <div class="header-actions">
       <label class="file-btn">
         <input id="videoInput" type="file" accept="video/*" />
@@ -31,13 +29,18 @@
 
   <main class="layout">
     <section class="media">
-      <div id="videoWrap" class="video-wrap">
-        <video id="video" class="video" controls crossorigin="anonymous"></video>
-        <canvas id="renderCanvas" class="video" style="display:none"></canvas>
+      <!--
+        video-stage sizes itself to the real video element box.
+        overlay sits on top with identical dimensions so cursor placement equals export placement.
+      -->
+      <div id="videoStage" class="video-stage">
+        <video id="video" class="video" controls crossorigin="anonymous" playsinline></video>
+        <canvas id="renderCanvas" class="" style="display:none"></canvas>
         <div id="overlay" class="overlay">
           <div class="overlay-grid"></div>
         </div>
       </div>
+
       <div class="transport">
         <button id="playPause" class="primary-btn">Play or pause</button>
         <div class="time-readout">
@@ -72,10 +75,10 @@
         </div>
         <div class="form-row">
           <label>Text size</label>
-          <input id="newSize" type="range" min="16" max="128" value="48">
+          <input id="newSize" type="range" min="16" max="160" value="64">
         </div>
         <button id="addCounter" class="primary-btn">Create counter</button>
-        <p class="hint">Drag each counter directly on the video to place it. Hold Shift to snap to grid.</p>
+        <p class="hint">Drag to place. Drag the small square to resize. Hold Shift to snap to grid.</p>
       </div>
 
       <div class="panel-section">
@@ -96,7 +99,7 @@
           </div>
         </div>
         <button id="addKeyframe" class="primary-btn">Add keyframe</button>
-        <p class="hint">Add multiple keyframes per counter. Values will animate smoothly between keyframes.</p>
+        <p class="hint">Add multiple keyframes per counter. Values animate smoothly between keyframes.</p>
         <div id="keyframeList" class="keyframe-list"></div>
       </div>
     </aside>
@@ -108,5 +111,4 @@
 
   <script src="app.js"></script>
 </body>
-
 </html>
