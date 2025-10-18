@@ -1,28 +1,17 @@
+# Counter Animator by SWC
 
-# Video Counter by SWC — fixed build
+A single page tool that animates a numeric counter from any start value to any end value over a set duration with custom styling, glow and export to WebM video using the MediaRecorder API. No server or dependencies required.
 
-Interactive counters over any video. Add multiple counters, set time and value keyframes, and export a WebM with audio. This build fixes two things:
-1. Overlay alignment equals export alignment for any aspect ratio or resolution.
-2. Export includes the source audio track.
+## Features
+- Start value end value duration controls with easing and formatting
+- Live preview on a canvas with gradient or transparent backgrounds or chroma key
+- Custom font size weight colour and glow shadow
+- Canvas resize for common video sizes like 1920x1080 and 1080x1920
+- Export to .webm with vp9 or vp8 via MediaRecorder
 
-It also adds:
-- Counter resize with a corner handle
-- HiDPI safe canvas for crisp text
+## Limitations
+- Alpha transparency in WebM depends on browser support. If you need a transparent asset pick chroma key background and remove it in your editor.
+- MP4 export is not available without a server or ffmpeg in the browser.
 
 ## Quick start
-1. Open `index.html` in a modern Chromium-based browser.
-2. Upload a video.
-3. Create a counter, drag to place, drag the small square to resize.
-4. Add keyframes for time and value.
-5. Press Export video.
-
-## Why alignment is correct now
-We removed the forced 16:9 box and let the video element define the stage size. The overlay sits exactly on top of the video element, and positions are stored as percentages of that box. During export we map those percentages to `videoWidth` and `videoHeight`, so placement is identical.
-
-## Audio in export
-We capture the canvas stream then add the audio track from the `<video>` element to the same stream before recording.
-
-## Files changed
-- `styles.css`: dropped the aspect ratio box and object-fit contain, added stage styling, resize handle styles.
-- `app.js`: added audio to export, HiDPI canvas, resize handle logic, and small robustness tweaks.
-- `index.html`: switched wrapper to `videoStage`, no aspect ratio wrapper, kept controls intact.
+Open index.html in a modern Chromium browser. Set your values. Click Preview then Record video then Download last video.

@@ -1,116 +1,186 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Video Counter by SWC</title>
-  <link rel="stylesheet" href="styles.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Counter Animator by SWC</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
-  <header class="site-header">
-    <h1 class="app-title">Video Counter by SWC</span></h1>
-    <div class="header-actions">
-      <label class="file-btn">
-        <input id="videoInput" type="file" accept="video/*" />
-        <span>Upload video</span>
-      </label>
-      <button id="saveConfig" class="ghost-btn" title="Download counters config as JSON">Export config</button>
-      <label class="ghost-btn file-like">
-        <input id="loadConfig" type="file" accept="application/json" />
-        <span>Import config</span>
-      </label>
-      <button id="toggleGrid" class="ghost-btn" title="Toggle placement grid">Toggle grid</button>
-      <button id="deleteSelected" class="ghost-btn" title="Delete selected counter">Delete selected</button>
-      <button id="clearAll" class="ghost-btn" title="Remove all counters">Clear all</button>
-      <button id="exportVideo" class="primary-btn" title="Export video with overlays">Export video</button>
-      <button id="exportMp4" class="ghost-btn" title="Export video as MP4">Export MP4</button>
-      <button id="stopExport" class="ghost-btn" title="Stop export" disabled>Stop export</button>
-    </div>
-  </header>
+  <div class="app">
+    <header class="topbar">
+      <h1>Counter Animator by SWC</h1>
+      <p class="subtitle">Set a start value an end value and a duration. Style it then export a video.</p>
+    </header>
 
-  <main class="layout">
-    <section class="media">
-      <!--
-        video-stage sizes itself to the real video element box.
-        overlay sits on top with identical dimensions so cursor placement equals export placement.
-      -->
-      <div id="videoStage" class="video-stage">
-        <video id="video" class="video" controls crossorigin="anonymous" playsinline></video>
-        <canvas id="renderCanvas" class="" style="display:none"></canvas>
-        <div id="overlay" class="overlay">
-          <div class="overlay-grid"></div>
-        </div>
-      </div>
-
-      <div class="transport">
-        <button id="playPause" class="primary-btn">Play or pause</button>
-        <div class="time-readout">
-          <span id="currentTime">00:00</span>
-          <span>of</span>
-          <span id="duration">00:00</span>
-        </div>
-        <div class="snap-tools">
-          <button id="snapKeyframes" class="ghost-btn">Snap to next keyframe</button>
-          <button id="jumpBack" class="ghost-btn">Jump back 1s</button>
-          <button id="jumpFwd" class="ghost-btn">Jump forward 1s</button>
-        </div>
-      </div>
-    </section>
-
-    <aside class="panel">
-      <div class="panel-section">
-        <h2>Add a counter</h2>
-        <div class="form-row">
+    <main class="layout">
+      <section class="panel controls">
+        <div class="field">
           <label>Label</label>
-          <input id="newLabel" type="text" placeholder="Example: beneficiaries">
+          <input id="labelInput" value="Beneficiaries" />
         </div>
-        <div class="form-row">
-          <label>Style</label>
-          <select id="newStyle">
-            <option value="glow-azure">Glow Azure</option>
-            <option value="glow-rose">Glow Rose</option>
-            <option value="glow-lime">Glow Lime</option>
-            <option value="glow-violet">Glow Violet</option>
-            <option value="glow-amber">Glow Amber</option>
+
+        <div class="field grid2">
+          <div>
+            <label>Start value</label>
+            <input id="startValue" type="number" value="20" />
+          </div>
+          <div>
+            <label>End value</label>
+            <input id="endValue" type="number" value="2000" />
+          </div>
+        </div>
+
+        <div class="field grid2">
+          <div>
+            <label>Duration seconds</label>
+            <input id="durationSec" type="number" min="1" value="60" />
+          </div>
+          <div>
+            <label>Frames per second</label>
+            <input id="fps" type="number" min="1" max="60" value="30" />
+          </div>
+        </div>
+
+        <div class="field grid2">
+          <div>
+            <label>Easing</label>
+            <select id="easing">
+              <option value="linear" selected>Linear</option>
+              <option value="easeIn">Ease in</option>
+              <option value="easeOut">Ease out</option>
+              <option value="easeInOut">Ease in out</option>
+            </select>
+          </div>
+          <div>
+            <label>Number formatting</label>
+            <select id="formatting">
+              <option value="plain" selected>Plain</option>
+              <option value="commas">Commas</option>
+              <option value="compact">Compact K M</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="field">
+          <label>Font family</label>
+          <select id="fontFamily">
+            <option value="'Inter', system-ui">Inter</option>
+            <option value="'Orbitron', system-ui">Orbitron</option>
+            <option value="system-ui" selected>System UI</option>
+            <option value="Georgia, serif">Georgia</option>
+            <option value="'Courier New', monospace">Courier New</option>
           </select>
         </div>
-        <div class="form-row">
-          <label>Text size</label>
-          <input id="newSize" type="range" min="16" max="160" value="64">
-        </div>
-        <button id="addCounter" class="primary-btn">Create counter</button>
-        <p class="hint">Drag to place. Drag the small square to resize. Hold Shift to snap to grid.</p>
-      </div>
 
-      <div class="panel-section">
-        <h2>Keyframes</h2>
-        <div class="form-row">
-          <label>Target counter</label>
-          <select id="kfCounter"></select>
-        </div>
-        <div class="form-row two">
+        <div class="field grid2">
           <div>
-            <label>Time</label>
-            <input id="kfTime" type="text" placeholder="mm:ss or hh:mm:ss">
-            <button id="useNow" class="ghost-btn small">Use current</button>
+            <label>Font size px</label>
+            <input id="fontSize" type="number" value="120" />
           </div>
           <div>
-            <label>Value</label>
-            <input id="kfValue" type="number" step="1" placeholder="123">
+            <label>Weight</label>
+            <select id="fontWeight">
+              <option>400</option>
+              <option selected>700</option>
+              <option>800</option>
+              <option>900</option>
+            </select>
           </div>
         </div>
-        <button id="addKeyframe" class="primary-btn">Add keyframe</button>
-        <p class="hint">Add multiple keyframes per counter. Values animate smoothly between keyframes.</p>
-        <div id="keyframeList" class="keyframe-list"></div>
-      </div>
-    </aside>
-  </main>
 
-  <footer class="site-footer">
-    <p>Built for creators who want delightful counters that flow with their story.</p>
-  </footer>
+        <div class="field grid2">
+          <div>
+            <label>Text colour</label>
+            <input id="textColor" type="color" value="#ffffff" />
+          </div>
+          <div>
+            <label>Glow colour</label>
+            <input id="glowColor" type="color" value="#50b3ff" />
+          </div>
+        </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.6/dist/ffmpeg.min.js"></script>
+        <div class="field grid2">
+          <div>
+            <label>Glow intensity</label>
+            <input id="glowBlur" type="range" min="0" max="60" value="30" />
+          </div>
+          <div>
+            <label>Shadow opacity</label>
+            <input id="glowAlpha" type="range" min="0" max="1" step="0.05" value="0.7" />
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="field">
+          <label>Background</label>
+          <select id="bgMode">
+            <option value="gradient" selected>Gradient</option>
+            <option value="solid">Solid colour</option>
+            <option value="transparent">Transparent</option>
+            <option value="chroma">Chroma key</option>
+          </select>
+        </div>
+
+        <div class="field grid2">
+          <div>
+            <label>BG colour A</label>
+            <input id="bgColorA" type="color" value="#0e0f1f" />
+          </div>
+          <div>
+            <label>BG colour B</label>
+            <input id="bgColorB" type="color" value="#141b3a" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Chroma colour for removal</label>
+          <input id="chromaColor" type="color" value="#00ff00" />
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="buttons">
+          <button id="previewBtn">Preview</button>
+          <button id="stopBtn" class="ghost">Stop</button>
+          <button id="recordBtn" class="primary">Record video</button>
+          <button id="downloadBtn" class="ghost">Download last video</button>
+        </div>
+
+        <p class="hint">
+          Recording uses MediaRecorder. It exports a .webm file. Transparency may depend on your browser. If you need a transparent result use chroma key then remove it in your editor.
+        </p>
+      </section>
+
+      <section class="panel stage">
+        <canvas id="stage" width="1920" height="1080"></canvas>
+        <div>
+          <a id="videoLink" class="videolink" download="counter.webm">No video recorded yet</a>
+        </div>
+        <div class="stage-controls">
+          <label>Canvas size</label>
+          <input id="canvasW" type="number" value="1920" />
+          <input id="canvasH" type="number" value="1080" />
+          <button id="resizeCanvas">Resize</button>
+        </div>
+      </section>
+
+    </main>
+
+    <footer class="foot">
+      <small>Built for creators and event pros. No server needed.</small>
+    </footer>
+  </div>
+
   <script src="app.js"></script>
 </body>
+
 </html>
